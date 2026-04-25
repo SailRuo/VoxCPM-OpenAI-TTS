@@ -1,0 +1,19 @@
+services:
+  voxcpm:
+    build: .
+    container_name: voxcpm_env
+    volumes:
+      - .:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "8081:8081"
+    environment:
+      - PYTHONUNBUFFERED=1
+    stdin_open: true
+    tty: true

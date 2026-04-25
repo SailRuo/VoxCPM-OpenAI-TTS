@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoxCPM2 - 终极语音工作站</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0d12;
+            --panel: rgba(23, 23, 33, 0.8);
+            --accent: #7289da;
+            --accent-glow: rgba(114, 137, 218, 0.3);
+            --text: #ffffff;
+            --text-dim: #949ba4;
+            --tab-inactive: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 10% 10%, #1c1c3a 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, #151525 0%, transparent 50%);
+        }
+
+        .container {
+            width: 850px;
+            background: var(--panel);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            padding: 40px;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.7);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Tab 系统 */
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            gap: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            color: var(--text-dim);
+            border: 1px solid transparent;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 表单样式 */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        textarea,
+        input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            color: white;
+            padding: 14px 18px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        textarea:focus,
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        textarea {
+            height: 120px;
+            resize: none;
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: #5d6166;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .main-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            background: var(--accent);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px var(--accent-glow);
+        }
+
+        button:disabled {
+            background: #313338;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #stopBtn {
+            flex: 0.2;
+            background: #da373c;
+        }
+
+        /* 可视化器 */
+        .visualizer {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 20px;
+        }
+
+        .bar {
+            width: 4px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        .bar.active {
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from {
+                height: 8px;
+                opacity: 0.5;
+            }
+
+            to {
+                height: 35px;
+                opacity: 1;
+            }
+        }
+
+        .status {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: block;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            transition: all 0.3s;
+        }
+
+        .file-input-wrapper:hover .file-label {
+            border-color: var(--accent);
+            color: white;
+            background: rgba(var(--accent-glow), 0.1);
+        }
+
+        .file-label.has-file {
+            border-style: solid;
+            border-color: var(--accent);
+            color: white;
+            background: var(--accent-glow);
+        }
+
+        /* 录制按钮 */
+        .record-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .record-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-dim);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .record-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-shadow: none;
+            filter: none;
+        }
+
+        .record-btn.recording {
+            background: rgba(218, 55, 60, 0.2);
+            border-color: #da373c;
+            color: #da373c;
+            animation: breathe 1.5s infinite;
+        }
+
+        .record-btn.has-record {
+            background: rgba(114, 137, 218, 0.2);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        @keyframes breathe {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>VoxCPM2 Studio</h1>
+        </header>
+
+        <!-- Tab 切换 -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(0, 'zero_shot')">基础合成</div>
+            <div class="tab" onclick="switchTab(1, 'design')">语音设计</div>
+            <div class="tab" onclick="switchTab(2, 'cloning')">音色克隆</div>
+            <div class="tab" onclick="switchTab(3, 'continuation')">情感延续</div>
+            <div class="tab" onclick="switchTab(4, 'ultimate')">极致克隆</div>
+        </div>
+
+        <!-- 目标文本 (公用) -->
+        <div class="input-group">
+            <label>目标转换内容 (Target Text)</label>
+            <textarea id="targetText" placeholder="在此输入需要生成的文字..."></textarea>
+        </div>
+
+        <!-- 各模式特有参数 -->
+        <div id="paramsArea">
+            <!-- 0. Zero-shot 不需要额外参数 -->
+            <div class="tab-content active" id="content-0">
+                <p class="hint">⚡ 零样本模式：直接由模型随机生成一个音色，每次生成的结果可能略有不同。</p>
+            </div>
+
+            <!-- 1. Voice Design -->
+            <div class="tab-content" id="content-1">
+                <div class="input-group">
+                    <label>音色描述提示词 (Style Prompt)</label>
+                    <input type="text" id="designPrompt" placeholder="例如: A gentle girl with a sweet voice">
+                    <p class="hint">🎨 创意模式：通过文字描述来“捏取”音色。系统会自动为您补全括号。</p>
+                </div>
+            </div>
+
+            <!-- 2. Cloning -->
+            <div class="tab-content" id="content-2">
+                <div class="input-group">
+                    <label>克隆目标音色 (Identity Voice)</label>
+                    <input type="text" id="cloneName" placeholder="填入 refvoice 目录下的文件名，如: linger">
+                    <div class="record-group">
+                        <div class="file-input-wrapper" style="flex: 2; margin-top: 0;">
+                            <input type="file" id="cloneFile" accept="audio/*" onchange="updateFileLabel(this)">
+                            <div class="file-label" id="cloneFileLabel">上传本地音频文件</div>
+                        </div>
+                        <button class="record-btn" id="recordBtn_clone" onclick="handleRecord('clone')">
+                            <span>🎤</span> <span id="recordText_clone">录制一段音频</span>
+                        </button>
+                    </div>
+                    <p class="hint">👥 克隆模式：指定一个参考音频，模型将提取其音色特征进行对话。</p>
+                </div>
+            </div>
+
+            <!-- 3. Continuation -->
+            <div class="tab-content" id="content-3">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>上下文参考音频 (Style Voice)</label>
+                        <input type="text" id="contStyleVoice" placeholder="如: yujie">
+                        <div class="record-group">
+                            <div class="file-input-wrapper" style="flex: 2; margin-top: 0;">
+                                <input type="file" id="contStyleFile" accept="audio/*" onchange="updateFileLabel(this)">
+                                <div class="file-label" id="contStyleFileLabel">上传音频</div>
+                            </div>
+                            <button class="record-btn" id="recordBtn_cont" onclick="handleRecord('cont')">
+                                <span>🎤</span> <span id="recordText_cont">录制</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>上下文参考文本 (Prompt Text)</label>
+                        <input type="text" id="contPromptText" placeholder="音频里说的原话">
+                    </div>
+                </div>
+                <p class="hint">延续上下文的情感、语调和背景环境，适合长文本切片合成。</p>
+            </div>
+
+            <!-- 4. Ultimate -->
+            <div class="tab-content" id="content-4">
+                <div class="input-group">
+                    <label>身份参考音色 (Identity)</label>
+                    <input type="text" id="ultIdentity" placeholder="如: linger">
+                    <div class="record-group">
+                        <div class="file-input-wrapper" style="flex: 2; margin-top: 0;">
+                            <input type="file" id="ultIdentityFile" accept="audio/*" onchange="updateFileLabel(this)">
+                            <div class="file-label" id="ultIdentityFileLabel">上传身份音频</div>
+                        </div>
+                        <button class="record-btn" id="recordBtn_ultId" onclick="handleRecord('ultId')">
+                            <span>👤</span> <span id="recordText_ultId">录制身份</span>
+                        </button>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>风格参考音频 (Style)</label>
+                        <input type="text" id="ultStyle" placeholder="如: emotional_sample">
+                        <div class="record-group">
+                            <div class="file-input-wrapper" style="flex: 2; margin-top: 0;">
+                                <input type="file" id="ultStyleFile" accept="audio/*" onchange="updateFileLabel(this)">
+                                <div class="file-label" id="ultStyleFileLabel">上传风格音频</div>
+                            </div>
+                            <button class="record-btn" id="recordBtn_ultStyle" onclick="handleRecord('ultStyle')">
+                                <span>🎨</span> <span id="recordText_ultStyle">录制风格</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>风格参考文本 (Prompt Text)</label>
+                        <input type="text" id="ultPromptText" placeholder="该样本的原话">
+                    </div>
+                </div>
+                <p class="hint">🏆 终极模式：用 A 的声音去模仿 B 的情感，实现最顶级的表现力。</p>
+            </div>
+        </div>
+
+        <!-- 进阶参数控制 -->
+        <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <div class="input-group">
+                <label>CFG 权重 (Style Guidance)</label>
+                <input type="number" id="cfgValue" value="2.0" step="0.1" min="1.0" max="10.0">
+                <p class="hint">值越高越贴近原音/描述，过高会有电音。</p>
+            </div>
+            <div class="input-group">
+                <label>推理步数 (Timesteps)</label>
+                <input type="number" id="inferenceTimesteps" value="10" step="1" min="1" max="100">
+                <p class="hint">步数多质量高但慢；流式推荐 10-15。</p>
+            </div>
+            <div class="input-group">
+                <label>随机种子 (Seed)</label>
+                <input type="number" id="seedValue" value="-1" step="1" min="-1">
+                <p class="hint">固定种子可复现语气；-1 为随机。</p>
+            </div>
+        </div>
+
+        <!-- 主控制 -->
+        <div class="main-controls">
+            <button id="playBtn">开始流式合成</button>
+            <button id="stopBtn">停止</button>
+        </div>
+
+        <div class="visualizer">
+            <script>for (let i = 0; i < 40; i++) document.write('<div class="bar"></div>');</script>
+        </div>
+
+        <div class="status" id="statusText">系统就绪</div>
+    </div>
+
+    <script>
+        let currentModeIndex = 0;
+        let currentModeKey = 'zero_shot';
+        let audioCtx = null;
+        let nextStartTime = 0;
+        let isPlaying = false;
+        let abortController = null;
+
+        // 录制相关逻辑
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordedBlobs = {}; // 存储不同模式录制的 blob
+
+        const modeDefaults = {
+            zero_shot: {
+                target: "你好，欢迎使用 VoxCPM2 语音工作室。这是零样本基础合成模式，系统将随机为你生成一个好听的音色。",
+            },
+            design: {
+                target: "这是我通过文字提示词设计的独特音效，听起来非常自然且富有磁性。",
+                prompt: "A mature man with a calm and confident radio host voice"
+            },
+            cloning: {
+                target: "灵儿正在为你读这段文字，现在的声音是不是和你记忆中一模一样？",
+                voice: "linger"
+            },
+            continuation: {
+                target: "所以说，在长音频合成场景下，情感延续模式能保证前后语速和情感的一致性。",
+                p_voice: "linger",
+                p_text: "刚才我演示了基本的语音合成逻辑，这种体验真的非常棒。"
+            },
+            ultimate: {
+                target: "无论你想模仿谁的情感，极致克隆模式都能通过分离音色和风格，达到几乎乱真的效果。",
+                p_id: "linger",
+                p_style: "doubao",
+                p_text: "哪怕是在复杂的语境下，我们也能精准提取出最具感染力的声音表达。"
+            }
+        };
+
+        function updateFileLabel(input) {
+            const label = input.nextElementSibling;
+            if (input.files && input.files[0]) {
+                label.innerText = "已选择: " + input.files[0].name;
+                label.classList.add('has-file');
+            } else {
+                label.innerText = "或者：点击此处上传本地音频文件";
+                label.classList.remove('has-file');
+            }
+        }
+
+        async function fileToB64(fileOrBlob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(fileOrBlob);
+            });
+        }
+
+        async function handleRecord(id) {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    recordedBlobs[id] = audioBlob;
+
+                    const btn = document.getElementById(`recordBtn_${id}`);
+                    const text = document.getElementById(`recordText_${id}`);
+                    btn.classList.remove('recording');
+                    btn.classList.add('has-record');
+                    text.innerText = "重录音频已就绪";
+
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                const btn = document.getElementById(`recordBtn_${id}`);
+                const text = document.getElementById(`recordText_${id}`);
+                btn.classList.add('recording');
+                text.innerText = "正在录音 (点击停止)";
+            } catch (err) {
+                alert("无法访问麦克风: " + err.message);
+            }
+        }
+
+        function saveConfig() {
+            const config = {
+                currentModeKey,
+                currentModeIndex,
+                targetText: document.getElementById('targetText').value,
+                designPrompt: document.getElementById('designPrompt').value,
+                cloneName: document.getElementById('cloneName').value,
+                contStyleVoice: document.getElementById('contStyleVoice').value,
+                contPromptText: document.getElementById('contPromptText').value,
+                ultIdentity: document.getElementById('ultIdentity').value,
+                ultStyle: document.getElementById('ultStyle').value,
+                ultPromptText: document.getElementById('ultPromptText').value,
+                cfgValue: document.getElementById('cfgValue').value,
+                inferenceTimesteps: document.getElementById('inferenceTimesteps').value,
+                seedValue: document.getElementById('seedValue').value
+            };
+            localStorage.setItem('voxcpm_config', JSON.stringify(config));
+        }
+
+        function loadConfig() {
+            const data = localStorage.getItem('voxcpm_config');
+            if (data) {
+                try {
+                    const config = JSON.parse(data);
+                    if (config.targetText !== undefined) document.getElementById('targetText').value = config.targetText;
+                    if (config.designPrompt !== undefined) document.getElementById('designPrompt').value = config.designPrompt;
+                    if (config.cloneName !== undefined) document.getElementById('cloneName').value = config.cloneName;
+                    if (config.contStyleVoice !== undefined) document.getElementById('contStyleVoice').value = config.contStyleVoice;
+                    if (config.contPromptText !== undefined) document.getElementById('contPromptText').value = config.contPromptText;
+                    if (config.ultIdentity !== undefined) document.getElementById('ultIdentity').value = config.ultIdentity;
+                    if (config.ultStyle !== undefined) document.getElementById('ultStyle').value = config.ultStyle;
+                    if (config.ultPromptText !== undefined) document.getElementById('ultPromptText').value = config.ultPromptText;
+                    if (config.cfgValue !== undefined) document.getElementById('cfgValue').value = config.cfgValue;
+                    if (config.inferenceTimesteps !== undefined) document.getElementById('inferenceTimesteps').value = config.inferenceTimesteps;
+                    if (config.seedValue !== undefined) document.getElementById('seedValue').value = config.seedValue;
+                    
+                    if (config.currentModeKey !== undefined) {
+                        switchTab(config.currentModeIndex || 0, config.currentModeKey, true);
+                        return;
+                    }
+                } catch (e) { console.error("Load config failed", e); }
+            }
+            switchTab(0, 'zero_shot', false);
+        }
+
+        function switchTab(index, key, isInitialLoad = false) {
+            currentModeIndex = index;
+            currentModeKey = key;
+            document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
+            document.querySelectorAll('.tab-content').forEach((c, i) => c.classList.toggle('active', i === index));
+
+            if (!isInitialLoad) {
+                // 仅在明确切换且内容为空时填充默认值
+                const def = modeDefaults[key];
+                const targetEl = document.getElementById('targetText');
+                if (def && !targetEl.value.trim()) targetEl.value = def.target || "";
+                
+                if (key === 'design') {
+                    const el = document.getElementById('designPrompt');
+                    if (!el.value.trim()) el.value = def.prompt || "";
+                }
+                if (key === 'cloning') {
+                    const el = document.getElementById('cloneName');
+                    if (!el.value.trim()) el.value = def.voice || "";
+                }
+                saveConfig();
+            }
+        }
+
+        window.onload = () => {
+            loadConfig();
+            // 绑定所有输入的自动保存
+            document.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', saveConfig);
+            });
+        };
+
+        const API_URL = "/v1/audio/speech";
+
+        document.getElementById('playBtn').onclick = async () => {
+            if (isPlaying) return;
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+            const targetTextRaw = document.getElementById('targetText').value.trim();
+            if (!targetTextRaw) return alert("请输入目标文本");
+
+            isPlaying = true;
+            document.getElementById('playBtn').disabled = true;
+            nextStartTime = audioCtx.currentTime + 0.1;
+
+            // 构造请求数据
+            let payload = {
+                input: targetTextRaw,
+                stream: true,
+                stream_format: "sse",
+                cfg_value: parseFloat(document.getElementById('cfgValue').value) || 2.0,
+                inference_timesteps: parseInt(document.getElementById('inferenceTimesteps').value) || 10,
+                seed: parseInt(document.getElementById('seedValue').value) || -1
+            };
+
+            try {
+                // 根据 Tab 注入参数
+                switch (currentModeKey) {
+                    case 'design':
+                        let prompt = document.getElementById('designPrompt').value.trim();
+                        if (prompt) {
+                            if (!prompt.startsWith('(')) prompt = '(' + prompt;
+                            if (!prompt.endsWith(')')) prompt = prompt + ')';
+                        }
+                        payload.input = prompt + " " + targetTextRaw;
+                        break;
+                    case 'cloning':
+                        payload.voice = document.getElementById('cloneName').value.trim();
+                        const cFile = document.getElementById('cloneFile').files[0];
+                        if (recordedBlobs['clone']) payload.voice_data = await fileToB64(recordedBlobs['clone']);
+                        else if (cFile) payload.voice_data = await fileToB64(cFile);
+                        break;
+                    case 'continuation':
+                        payload.prompt_voice = document.getElementById('contStyleVoice').value.trim();
+                        payload.prompt_text = document.getElementById('contPromptText').value.trim();
+                        const csFile = document.getElementById('contStyleFile').files[0];
+                        if (recordedBlobs['cont']) payload.prompt_voice_data = await fileToB64(recordedBlobs['cont']);
+                        else if (csFile) payload.prompt_voice_data = await fileToB64(csFile);
+                        break;
+                    case 'ultimate':
+                        payload.voice = document.getElementById('ultIdentity').value.trim();
+                        payload.prompt_voice = document.getElementById('ultStyle').value.trim();
+                        payload.prompt_text = document.getElementById('ultPromptText').value.trim();
+
+                        const uiFile = document.getElementById('ultIdentityFile').files[0];
+                        if (recordedBlobs['ultId']) payload.voice_data = await fileToB64(recordedBlobs['ultId']);
+                        else if (uiFile) payload.voice_data = await fileToB64(uiFile);
+
+                        const usFile = document.getElementById('ultStyleFile').files[0];
+                        if (recordedBlobs['ultStyle']) payload.prompt_voice_data = await fileToB64(recordedBlobs['ultStyle']);
+                        else if (usFile) payload.prompt_voice_data = await fileToB64(usFile);
+                        break;
+                }
+
+                document.getElementById('statusText').innerText = "连接服务器...";
+
+                abortController = new AbortController();
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: abortController.signal
+                });
+
+                if (!response.ok) {
+                    let errorMessage = "服务器请求失败";
+                    try {
+                        const err = await response.json();
+                        errorMessage = err.detail || errorMessage;
+                    } catch (e) {
+                        try {
+                            errorMessage = await response.text() || errorMessage;
+                        } catch (t) { }
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                const process = async () => {
+                    const { done, value } = await reader.read();
+                    if (done) return cleanup();
+                    buffer += decoder.decode(value);
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop();
+
+                    for (let line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+                            try {
+                                const json = JSON.parse(data);
+                                if (json.audio) playChunk(json.audio, json.sample_rate);
+                            } catch (e) { }
+                        }
+                    }
+                    process();
+                };
+                process();
+
+            } catch (err) {
+                alert("错误: " + err.message);
+                cleanup();
+            }
+        };
+
+        function playChunk(b64, sr) {
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const int16Data = new Int16Array(bytes.buffer);
+            const floatData = new Float32Array(int16Data.length);
+            for (let i = 0; i < int16Data.length; i++) {
+                floatData[i] = int16Data[i] / 32768.0;
+            }
+
+            const buf = audioCtx.createBuffer(1, floatData.length, sr);
+            buf.copyToChannel(floatData, 0);
+            const src = audioCtx.createBufferSource();
+            src.buffer = buf;
+            src.connect(audioCtx.destination);
+
+            const start = Math.max(nextStartTime, audioCtx.currentTime);
+            src.start(start);
+            nextStartTime = start + buf.duration;
+
+            document.getElementById('statusText').innerText = "正在流式播放模型输出...";
+            toggleBars(true);
+        }
+
+        document.getElementById('stopBtn').onclick = () => {
+            if (abortController) abortController.abort();
+            cleanup();
+            document.getElementById('statusText').innerText = "已停止";
+        };
+
+        function toggleBars(on) {
+            document.querySelectorAll('.bar').forEach(b => b.classList.toggle('active', on));
+        }
+
+        function cleanup() {
+            isPlaying = false;
+            document.getElementById('playBtn').disabled = false;
+            setTimeout(() => {
+                if (!isPlaying) {
+                    document.getElementById('statusText').innerText = "完成";
+                    toggleBars(false);
+                }
+            }, 800);
+        }
+    </script>
+</body>
+
+</html>
