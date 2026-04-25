@@ -38,7 +38,7 @@
         }
 
         .container {
-            width: 850px;
+            width: 1000px;
             background: var(--panel);
             backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -149,9 +149,93 @@
             background: rgba(0, 0, 0, 0.4);
         }
 
+        /* 隐藏数字输入框的原生箭头 */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+            text-align: center; /* 数字居中显示更美观 */
+        }
+
+        /* 自定义数字调节组 */
+        .number-control {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .number-control:focus-within {
+            border-color: var(--accent);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .number-control input {
+            border: none;
+            background: transparent;
+            padding: 12px 5px;
+            border-radius: 0;
+        }
+
+        .step-btn {
+            width: 40px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            user-select: none;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .step-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .step-btn:active {
+            background: var(--accent-glow);
+        }
+
+        .step-btn.minus {
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .step-btn.plus {
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
         textarea {
             height: 120px;
             resize: none;
+        }
+
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background: rgba(114, 137, 218, 0.4);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: rgba(114, 137, 218, 0.7);
         }
 
         .hint {
@@ -161,13 +245,14 @@
             line-height: 1.4;
         }
 
+        /* 主控制 */
         .main-controls {
             display: flex;
             gap: 15px;
             margin-top: 30px;
         }
 
-        button {
+        #actionBtn {
             flex: 1;
             background: var(--accent);
             border: none;
@@ -184,57 +269,40 @@
             transition: all 0.3s ease;
         }
 
-        button:hover {
+        #actionBtn.running {
+            background: #da373c;
+        }
+
+        #actionBtn:hover {
             filter: brightness(1.1);
             transform: translateY(-2px);
             box-shadow: 0 10px 20px var(--accent-glow);
         }
 
-        button:disabled {
-            background: #313338;
-            cursor: not-allowed;
-            transform: none;
+        #actionBtn.running:hover {
+            box-shadow: 0 10px 20px rgba(218, 55, 60, 0.3);
         }
 
-        #stopBtn {
-            flex: 0.2;
-            background: #da373c;
+        .status {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 15px;
         }
 
         /* 可视化器 */
-        .visualizer {
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
+        .audio-player-container {
             margin-top: 30px;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 20px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .bar {
-            width: 4px;
-            height: 8px;
-            background: var(--accent);
-            border-radius: 2px;
-            transition: height 0.1s ease;
-        }
-
-        .bar.active {
-            animation: pulse 1s infinite alternate;
-        }
-
-        @keyframes pulse {
-            from {
-                height: 8px;
-                opacity: 0.5;
-            }
-
-            to {
-                height: 35px;
-                opacity: 1;
-            }
+        .audio-player {
+            width: 100%;
+            height: 45px;
+            filter: invert(100%) hue-rotate(180deg) brightness(1.5); /* 核心技巧：反转颜色以适配深色主题 */
         }
 
         .status {
@@ -460,32 +528,44 @@
 
         <!-- 进阶参数控制 -->
         <div
-            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
             <div class="input-group">
                 <label>CFG 权重 (Style Guidance)</label>
-                <input type="number" id="cfgValue" value="2.0" step="0.1" min="1.0" max="10.0">
-                <p class="hint">值越高越贴近原音/描述，过高会有电音。</p>
+                <div class="number-control">
+                    <div class="step-btn minus" onclick="stepNumber('cfgValue', -0.1)">−</div>
+                    <input type="number" id="cfgValue" value="2.0" step="0.1" min="1.0" max="10.0">
+                    <div class="step-btn plus" onclick="stepNumber('cfgValue', 0.1)">+</div>
+                </div>
+                <p class="hint">值越高越贴近原音/描述。</p>
             </div>
             <div class="input-group">
                 <label>推理步数 (Timesteps)</label>
-                <input type="number" id="inferenceTimesteps" value="10" step="1" min="1" max="100">
-                <p class="hint">步数多质量高但慢；流式推荐 10-15。</p>
+                <div class="number-control">
+                    <div class="step-btn minus" onclick="stepNumber('inferenceTimesteps', -1)">−</div>
+                    <input type="number" id="inferenceTimesteps" value="10" step="1" min="1" max="100">
+                    <div class="step-btn plus" onclick="stepNumber('inferenceTimesteps', 1)">+</div>
+                </div>
+                <p class="hint">步数多质量高但慢。</p>
             </div>
             <div class="input-group">
                 <label>随机种子 (Seed)</label>
-                <input type="number" id="seedValue" value="-1" step="1" min="-1">
-                <p class="hint">固定种子可复现语气；-1 为随机。</p>
+                <div class="number-control">
+                    <div class="step-btn minus" onclick="stepNumber('seedValue', -1)">−</div>
+                    <input type="number" id="seedValue" value="-1" step="1" min="-1">
+                    <div class="step-btn plus" onclick="stepNumber('seedValue', 1)">+</div>
+                </div>
+                <p class="hint">固定种子可复现语气。</p>
             </div>
+        </div>
+
+        <!-- 播放器 (放在按钮上方) -->
+        <div class="audio-player-container" id="audioPlayerContainer">
+            <audio class="audio-player" id="audioPlayer" controls></audio>
         </div>
 
         <!-- 主控制 -->
         <div class="main-controls">
-            <button id="playBtn">开始流式合成</button>
-            <button id="stopBtn">停止</button>
-        </div>
-
-        <div class="visualizer">
-            <script>for (let i = 0; i < 40; i++) document.write('<div class="bar"></div>');</script>
+            <button id="actionBtn">开始流式合成</button>
         </div>
 
         <div class="status" id="statusText">系统就绪</div>
@@ -498,11 +578,11 @@
         let nextStartTime = 0;
         let isPlaying = false;
         let abortController = null;
-
-        // 录制相关逻辑
-        let mediaRecorder = null;
+        
         let audioChunks = [];
-        let recordedBlobs = {}; // 存储不同模式录制的 blob
+        let mediaRecorder = null;
+        let recordedBlobs = {};
+        let audioBlobForDownload = null;
 
         const modeDefaults = {
             zero_shot: {
@@ -529,6 +609,21 @@
             }
         };
 
+        function stepNumber(id, step) {
+            const el = document.getElementById(id);
+            let val = parseFloat(el.value) || 0;
+            val = +(val + step).toFixed(2); // 处理浮点数精度
+            
+            const min = parseFloat(el.getAttribute('min'));
+            const max = parseFloat(el.getAttribute('max'));
+            
+            if (!isNaN(min) && val < min) val = min;
+            if (!isNaN(max) && val > max) val = max;
+            
+            el.value = val;
+            saveConfig();
+        }
+
         function updateFileLabel(input) {
             const label = input.nextElementSibling;
             if (input.files && input.files[0]) {
@@ -547,6 +642,31 @@
                 reader.onerror = reject;
                 reader.readAsDataURL(fileOrBlob);
             });
+        }
+
+        // WAV 文件头生成工具
+        function createWavHeader(dataLength, sampleRate) {
+            const buffer = new ArrayBuffer(44);
+            const view = new DataView(buffer);
+            const writeString = (view, offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataLength, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, 1, true); // Mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true); // ByteRate
+            view.setUint16(32, 2, true); // BlockAlign
+            view.setUint16(34, 16, true); // BitsPerSample
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataLength, true);
+            return buffer;
         }
 
         async function handleRecord(id) {
@@ -666,8 +786,16 @@
 
         const API_URL = "/v1/audio/speech";
 
-        document.getElementById('playBtn').onclick = async () => {
-            if (isPlaying) return;
+        document.getElementById('actionBtn').onclick = async () => {
+            if (isPlaying) {
+                // 如果正在播放，则执行停止逻辑
+                if (abortController) abortController.abort();
+                cleanup();
+                document.getElementById('statusText').innerText = "已停止";
+                return;
+            }
+
+            // 开始合成逻辑
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
             if (audioCtx.state === 'suspended') await audioCtx.resume();
 
@@ -675,7 +803,10 @@
             if (!targetTextRaw) return alert("请输入目标文本");
 
             isPlaying = true;
-            document.getElementById('playBtn').disabled = true;
+            const btn = document.getElementById('actionBtn');
+            btn.innerText = "停止合成";
+            btn.classList.add('running');
+
             nextStartTime = audioCtx.currentTime + 0.1;
 
             // 构造请求数据
@@ -689,6 +820,12 @@
             };
 
             try {
+                // 重置音频块
+                audioChunks = [];
+                document.getElementById('audioPlayerContainer').classList.remove('visible');
+                document.getElementById('audioPlayer').src = '';
+                audioBlobForDownload = null;
+                
                 // 根据 Tab 注入参数
                 switch (currentModeKey) {
                     case 'design':
@@ -802,26 +939,38 @@
             nextStartTime = start + buf.duration;
 
             document.getElementById('statusText').innerText = "正在流式播放模型输出...";
-            toggleBars(true);
-        }
-
-        document.getElementById('stopBtn').onclick = () => {
-            if (abortController) abortController.abort();
-            cleanup();
-            document.getElementById('statusText').innerText = "已停止";
-        };
-
-        function toggleBars(on) {
-            document.querySelectorAll('.bar').forEach(b => b.classList.toggle('active', on));
+            
+            audioChunks.push(bytes);
         }
 
         function cleanup() {
             isPlaying = false;
-            document.getElementById('playBtn').disabled = false;
+            const btn = document.getElementById('actionBtn');
+            btn.innerText = "开始流式合成";
+            btn.classList.remove('running');
+            
+            if (audioChunks.length > 0) {
+                // 合并所有 Uint8Array
+                const totalLength = audioChunks.reduce((acc, chunk) => acc + chunk.length, 0);
+                const mergedData = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const chunk of audioChunks) {
+                    mergedData.set(chunk, offset);
+                    offset += chunk.length;
+                }
+
+                // 添加 WAV 头
+                const wavHeader = createWavHeader(totalLength, 48000);
+                audioBlobForDownload = new Blob([wavHeader, mergedData], { type: 'audio/wav' });
+                
+                const audioUrl = URL.createObjectURL(audioBlobForDownload);
+                const audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = audioUrl;
+            }
+            
             setTimeout(() => {
                 if (!isPlaying) {
                     document.getElementById('statusText').innerText = "完成";
-                    toggleBars(false);
                 }
             }, 800);
         }

@@ -11,6 +11,8 @@
 [![Discord](https://img.shields.io/badge/Discord-VoxCPM-5865F2?logo=discord&logoColor=white)](https://discord.gg/KZUx7tVNwz)
 [![Lark](https://img.shields.io/badge/飞书群-VoxCPM-00D6B9?logo=lark&logoColor=white)](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=acds0b9d-23d8-4d7e-b696-d200f3e22a7f)
 
+![VoxCPM2 Studio 预览](image.png)
+
 ## 核心亮点
 
 - 🌍 **支持 30 种语言** — 无需语言标签，直接输入任何支持的语言文本即可。
